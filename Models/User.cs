@@ -1,11 +1,10 @@
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using ezapiekanka.DataAccess;
 
 namespace ezapiekanka.Models;
 
-public class UserModel
+public sealed class User : Entity
 {
-    [Key]public Guid Id { get; set; }
     [ForeignKey("school")]public Guid School { get; set; }
     public string? Name { get; set; }
     public string? Surname { get; set; }

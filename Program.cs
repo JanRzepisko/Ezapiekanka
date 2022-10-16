@@ -1,15 +1,15 @@
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ezapiekanka.DataAccess;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-
 using ezapiekanka.JwtService;
+using ezapiekanka.Repository.Interfaces;
+using ezapiekanka.Repository.Services;
 using ezapiekanka.Services.ProductService;
 using ezapiekanka.Services.UserService;
-
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,10 +17,15 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<UserContext>(options => options.UseNpgsql(builder.Configuration["ConnectionString"]!));
 builder.Services.AddDbContext<ProductContext>(options => options.UseNpgsql(builder.Configuration["ConnectionString"]!));
 
+builder.Services.AddScoped<IUnitOfWork>(c => c.GetRequiredService<UserContext>());
+builder.Services.AddScoped<IUnitOfWork>(c => c.GetRequiredService<ProductContext>());
+
 //Add My Services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IJwtAuth, JwtAuth>();
+
+
 
 //Add builders Services
 //Json Parser
@@ -34,6 +39,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAuthorization();
 
+//Configuration
 builder.Services.Configure<string>(builder.Configuration);
 
 builder.Services.AddCors(options =>
@@ -51,13 +57,13 @@ builder.Services.AddAuthentication(options =>
 {
     o.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? string.Empty)),
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = false,
-        ValidateIssuerSigningKey = true
+          ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Issuer"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
     };
 });
 builder.Services.AddAuthorization(config =>
